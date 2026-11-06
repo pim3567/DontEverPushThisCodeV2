@@ -40,12 +40,9 @@ jobs:
               with:
                 path: ./
                 # TODO#2: set base + HEAD refs so TruffleHog scans the commit diff
-                # base: ???
-                # head: ???
-                # TODO#3: add extra_args flag to report ONLY VERIFIED secrets (reduce noise)
-                # extra_args: ???
                 base: ${{ github.event.repository.default_branch }}
                 head: ${{ github.sha }}
+                # TODO#3: add extra_args flag to report ONLY VERIFIED secrets (reduce noise)
                 extra_args: "--only-verified"
 
             # Gitleaks scans code + history for regex patterns that look like secrets. It can be more accurate than TruffleHog, but may miss live creds that don't match known patterns.
@@ -97,7 +94,7 @@ jobs:
             matrix:
                 # TODO#7: set correct CodeQL language for this Next.js / React project 
                 #HINT: What language do we use to write React code? What about Next.js API routes?
-                language: [ '???' ]
+                language: [ javascript-typescript ]
         steps:
             - name: Checkout code
               uses: actions/checkout@v4
@@ -109,7 +106,7 @@ jobs:
                 languages: ${{ matrix.language }}
                 # TODO#8: enable extended security + quality query suites
                 # queries: ???
-                queries: ???,???
+                queries: security-extended,security-and-quality
                 # RESOURCE — CodeQL query suites:
                 # https://docs.github.com/en/code-security/code-scanning/creating-an-advanced-setup-for-code-scanning/codeql-code-scanning-for-compiled-languages#codeql-query-suites
                 #
@@ -138,9 +135,14 @@ jobs:
               uses: actions/checkout@v4
 
             # TODO#10: set up Node 20 using actions/setup-node@v4
-
+            - name: Set up Node.js
+              uses: actions/setup-node@v4
+              with:
+                node-version: '20'
             # TODO#11: install npm deps so Dependency-Check can resolve full tree
             #          Hint: `npm install` or `npm ci`
+            - name: Install npm dependencies
+              run: npm install
 
               # OWASP Dependency-Check is a popular open-source tool that scans your dependencies for known vulnerabilities. It can output results in SARIF format for GitHub Security tab integration, as well as HTML for human-readable reports.
             - name: Depcheck
@@ -151,12 +153,12 @@ jobs:
                 project: 'DontEverPushThisCodeV2'
                 path: '.' # scan current directory (which should be the repo root after checkout)
                 # TODO#12: which format integrates with GitHub Security tab?
-                format: '???'
+                format: 'sarif'
                 out: 'reports'
                 # TODO#13: set fail threshold — block on CVSS >= ?
                 # Hint: CVSS 7.0+ = HIGH
                 args: >
-                    --failOnCVSS ???
+                    --failOnCVSS 7.0
                     --enableRetired
 
             # TODO#14: upload Depcheck SARIF to GitHub Security tab
