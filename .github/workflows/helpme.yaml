@@ -40,10 +40,12 @@ jobs:
               with:
                 path: ./
                 # TODO#2: set base + HEAD refs so TruffleHog scans the commit diff
-                base: ${{ github.event.repository.default_branch }}
-                head: ${{ github.sha }}
+                # PR: compare base/head SHAs. Push: compare before/after SHAs.
+                # A newly created branch has an all-zero before SHA; scan its history.
+                base: ${{ github.event.pull_request.base.sha || (github.event.before != '0000000000000000000000000000000000000000' && github.event.before) || '' }}
+                head: ${{ github.event.pull_request.head.sha || github.sha }}
                 # TODO#3: add extra_args flag to report ONLY VERIFIED secrets (reduce noise)
-                extra_args: "--only-verified"
+                extra_args: "--results=verified"
 
             # Gitleaks scans code + history for regex patterns that look like secrets. It can be more accurate than TruffleHog, but may miss live creds that don't match known patterns.
             # TODO#4: add Gitleaks step below.
